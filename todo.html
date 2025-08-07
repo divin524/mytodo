@@ -1,0 +1,106 @@
+<html>
+<head>
+  <title>To-Do App</title>
+  <style>
+    body {
+      font-family: sans-serif; background: #f0f0f0;
+      display: flex; justify-content: center; align-items: center; height: 100vh;
+    }
+    .box { background: #fff; padding: 20px; border-radius: 10px; width: 260px; }
+    input[type="text"] { width: 100%; padding: 8px; margin-bottom: 10px; }
+    ul { list-style: none; padding: 0; }
+    li { display: flex; align-items: center; margin: 10px 0; }
+    .completed { text-decoration: line-through; color: gray; }
+    .task-label { font-weight: bold; margin-right: 6px; }
+    button { margin-left: 5px; }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>TO-DO LIST</h1>
+    <input id="taskInput" type="text" placeholder="ENTER A TASK">
+    <button onclick="addTask()">ADD</button>
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const input = document.getElementById("taskInput");
+    const list = document.getElementById("taskList");
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    const save = () => localStorage.setItem("tasks", JSON.stringify(tasks));
+
+    function addTask() {
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.push({ text, completed: false });
+      input.value = "";
+      save();
+      render();
+    }
+
+    function editTask(i) {
+      const li = list.children[i];
+      li.innerHTML = '';
+      const editInput = Object.assign(document.createElement("input"), { type: "text", value: tasks[i].text });
+      const done = Object.assign(document.createElement("button"), { textContent: "DONE" });
+
+      done.onclick = () => {
+        const newText = editInput.value.trim();
+        if (newText) {
+          tasks[i].text = newText;
+          save();
+          render();
+        }
+      };
+
+      editInput.onkeypress = e => { if (e.key === "Enter") done.click(); };
+      li.append(editInput, done);
+      editInput.focus();
+    }
+
+    function deleteTask(i) {
+      tasks.splice(i, 1);
+      save();
+      render();
+    }
+
+    function render() {
+      list.innerHTML = "";
+      tasks.forEach((t, i) => {
+        const li = document.createElement("li");
+
+        const check = Object.assign(document.createElement("input"), {
+          type: "checkbox", checked: t.completed,
+          onchange: () => { t.completed = !t.completed; save(); render(); }
+        });
+
+        const label = Object.assign(document.createElement("span"), {
+          className: "task-label", textContent: `Task ${i + 1}:`
+        });
+
+        const text = Object.assign(document.createElement("span"), {
+          textContent: t.text, className: t.completed ? "completed" : ""
+        });
+
+        const edit = Object.assign(document.createElement("button"), {
+          textContent: "EDIT", onclick: () => editTask(i), disabled: t.completed
+        });
+
+        const del = Object.assign(document.createElement("button"), {
+          textContent: "DELETE", onclick: () => deleteTask(i)
+        });
+
+        li.append(check, label, text, edit, del);
+        list.appendChild(li);
+      });
+    }
+
+    input.onkeypress = e => { if (e.key === "Enter") addTask(); };
+
+    render();
+  </script>
+
+</body>
+</html>
